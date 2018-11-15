@@ -463,7 +463,7 @@ void DividendOptionTest::testEuropeanGreeks() {
                     d < exercise->lastDate();
                     d += 6*Months) {
               dividendDates.push_back(d);
-              dividends.push_back(5.0);
+              dividends.push_back(10.0);
           }
 
           ext::shared_ptr<StrikedTypePayoff> payoff(
@@ -502,7 +502,7 @@ void DividendOptionTest::testEuropeanGreeks() {
 
                     if (value > spot->value()*1.0e-5) {
                         // perturb spot and get delta and gamma
-                        Real du = u*1.0e-4;
+                        Real du = u*1.0e-2;
                         spot->setValue(u+du);
                         Real value_p = option.NPV(),
                              delta_p = option.delta();
@@ -580,9 +580,10 @@ void DividendOptionTest::testFdEuropeanValues() {
     Option::Type types[] = { Option::Call, Option::Put };
     Real strikes[] = { 50.0, 99.5, 100.0, 100.5, 150.0 };
     Real underlyings[] = { 100.0 };
-    // Rate qRates[] = { 0.00, 0.10, 0.30 };
-    // Analytic dividend may not be handling q correctly
-    Rate qRates[] = { 0.00 };
+    Rate qRates[] = { 0.00, 0.10 }; //, 0.30 };
+    // Analytic dividend now handled correctly
+    // FD model breaking for very large repo rates however
+    // Rate qRates[] = { 0.0 };
     Rate rRates[] = { 0.01, 0.05, 0.15 };
     Integer lengths[] = { 1, 2 };
     Volatility vols[] = { 0.05, 0.20, 0.40 };

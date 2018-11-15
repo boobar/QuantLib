@@ -45,6 +45,8 @@ namespace QuantLib {
             if (arguments_.cashFlow[i]->date() >= settlementDate)
                 riskless += arguments_.cashFlow[i]->amount() *
                     process_->riskFreeRate()->discount(
+                                              arguments_.cashFlow[i]->date()) /
+                    process_->dividendYield()->discount(
                                               arguments_.cashFlow[i]->date());
 
         Real spot = process_->stateVariable()->value() - riskless;
@@ -71,6 +73,7 @@ namespace QuantLib {
         results_.gamma = black.gamma(spot);
 
         DayCounter rfdc  = process_->riskFreeRate()->dayCounter();
+        DayCounter divdc  = process_->dividendYield()->dayCounter();
         DayCounter voldc = process_->blackVolatility()->dayCounter();
         Time t = voldc.yearFraction(
                                  process_->blackVolatility()->referenceDate(),
@@ -82,11 +85,14 @@ namespace QuantLib {
             Date d = arguments_.cashFlow[i]->date();
             if (d >= settlementDate) {
                 delta_theta -= arguments_.cashFlow[i]->amount() *
-                  process_->riskFreeRate()->zeroRate(d,rfdc,Continuous,Annual)*
-                  process_->riskFreeRate()->discount(d);
+                 (process_->riskFreeRate()->zeroRate(d,rfdc,Continuous,Annual) -
+                  process_->dividendYield()->zeroRate(d,divdc,Continuous,Annual)) *
+                  process_->riskFreeRate()->discount(d)/
+                  process_->dividendYield()->discount(d);
                 Time t = process_->time(d);
                 delta_rho += arguments_.cashFlow[i]->amount() * t *
-                             process_->riskFreeRate()->discount(t);
+                             process_->riskFreeRate()->discount(t) /
+                             process_->dividendYield()->discount(t);
             }
         }
         t = process_->time(arguments_.exercise->lastDate());
