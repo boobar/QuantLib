@@ -502,7 +502,7 @@ void DividendOptionTest::testEuropeanGreeks() {
 
                     if (value > spot->value()*1.0e-5) {
                         // perturb spot and get delta and gamma
-                        Real du = u*1.0e-2;
+                        Real du = u*1.0e-4;
                         spot->setValue(u+du);
                         Real value_p = option.NPV(),
                              delta_p = option.delta();

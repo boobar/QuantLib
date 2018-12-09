@@ -26,6 +26,7 @@
 #define quantlib_dividend_hpp
 
 #include <ql/cashflow.hpp>
+#include <ql/cashflows/dividend.hpp>
 #include <ql/utilities/null.hpp>
 #include <vector>
 
@@ -35,6 +36,9 @@ namespace QuantLib {
     /*! This cash flow pays a predetermined amount at a given date. */
     class Dividend : public CashFlow {
       public:
+        enum Type { Fixed = 0,
+                    Fractional = 1
+        };
         Dividend(const Date& date)
         : date_(date) {}
         //! \name Event interface
@@ -64,6 +68,7 @@ namespace QuantLib {
         //@{
         virtual Real amount() const { return amount_; }
         virtual Real amount(Real) const { return amount_; }
+        virtual void accept(AcyclicVisitor&);
         //@}
       protected:
         Real amount_;
@@ -92,6 +97,7 @@ namespace QuantLib {
         //@{
         Real rate() const { return rate_; }
         Real nominal() const { return nominal_; }
+        virtual void accept(AcyclicVisitor&);
         //@}
       protected:
         Real rate_;
@@ -103,6 +109,13 @@ namespace QuantLib {
     std::vector<ext::shared_ptr<Dividend> >
     DividendVector(const std::vector<Date>& dividendDates,
                    const std::vector<Real>& dividends);
+
+    std::vector<ext::shared_ptr<Dividend> >
+    DividendVector(const std::vector<Date>& dividendDates,
+                   const std::vector<Real>& dividends,
+                   const std::vector<Dividend::Type>& types);
+
+
 
 }
 

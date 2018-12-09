@@ -20,6 +20,7 @@
 #include <ql/pricingengines/vanilla/analyticdividendeuropeanengine.hpp>
 #include <ql/pricingengines/blackcalculator.hpp>
 #include <ql/exercise.hpp>
+#include <ql/instruments/dividendschedule.hpp>
 
 namespace QuantLib {
 
@@ -39,15 +40,18 @@ namespace QuantLib {
         QL_REQUIRE(payoff, "non-striked payoff given");
 
         Date settlementDate = process_->riskFreeRate()->referenceDate();
-        Real riskless = 0.0;
-        Size i;
-        for (i=0; i<arguments_.cashFlow.size(); i++)
-            if (arguments_.cashFlow[i]->date() >= settlementDate)
-                riskless += arguments_.cashFlow[i]->amount() *
-                    process_->riskFreeRate()->discount(
-                                              arguments_.cashFlow[i]->date()) /
-                    process_->dividendYield()->discount(
-                                              arguments_.cashFlow[i]->date());
+
+        //        Date valuationDate = arguments_.exercise->date();
+        GetEscrow escrow(process_->riskFreeRate(),process_->dividendYield());
+
+
+        std::vector<ext::shared_ptr<Dividend> >::const_iterator d;
+        for (d = arguments_.cashFlow.begin(); d != arguments_.cashFlow.end(); ++d) {
+            escrow.visit(**d);
+        }
+
+
+        Real riskless = escrow.escrowAmount();;
 
         Real spot = process_->stateVariable()->value() - riskless;
         QL_REQUIRE(spot > 0.0,
@@ -58,7 +62,9 @@ namespace QuantLib {
                                              arguments_.exercise->lastDate());
         DiscountFactor riskFreeDiscount =
             process_->riskFreeRate()->discount(arguments_.exercise->lastDate());
-        Real forwardPrice = spot * dividendDiscount / riskFreeDiscount;
+
+        Real propFactor = escrow.propFactor();
+        Real forwardPrice = spot * propFactor * dividendDiscount / riskFreeDiscount;
 
         Real variance =
             process_->blackVolatility()->blackVariance(
@@ -72,6 +78,7 @@ namespace QuantLib {
         results_.delta = black.delta(spot);
         results_.gamma = black.gamma(spot);
 
+
         DayCounter rfdc  = process_->riskFreeRate()->dayCounter();
         DayCounter divdc  = process_->dividendYield()->dayCounter();
         DayCounter voldc = process_->blackVolatility()->dayCounter();
@@ -81,7 +88,7 @@ namespace QuantLib {
         results_.vega = black.vega(t);
 
         Real delta_theta = 0.0, delta_rho = 0.0;
-        for (i = 0; i < arguments_.cashFlow.size(); i++) {
+        for (int i = 0; i < arguments_.cashFlow.size(); i++) {
             Date d = arguments_.cashFlow[i]->date();
             if (d >= settlementDate) {
                 delta_theta -= arguments_.cashFlow[i]->amount() *
@@ -107,5 +114,8 @@ namespace QuantLib {
                        delta_rho * black.delta(spot);
     }
 
-}
 
+
+
+
+}

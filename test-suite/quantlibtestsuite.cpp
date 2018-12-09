@@ -196,6 +196,7 @@
 #include "volatilitymodels.hpp"
 #include "vpp.hpp"
 #include "zabr.hpp"
+#include "dividendschedule.hpp"
 
 #include <iostream>
 #include <iomanip>
@@ -354,6 +355,7 @@ test_suite* init_unit_test_suite(int, char* []) {
 
     test->add(QUANTLIB_TEST_CASE(startTimer));
 
+    test->add(DividendScheduleTest::suite());
     test->add(AmericanOptionTest::suite());
     test->add(AndreasenHugeVolatilityInterplTest::suite(speed));
     test->add(ArrayTest::suite());
